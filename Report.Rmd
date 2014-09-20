@@ -1,0 +1,25 @@
+---
+title: "Reproducible Research : Project 2"
+author: "Mathieu Besancon"
+date: "Sunday, September 14, 2014"
+output: html_document
+---
+##Introduction
+This report was created for the Reproducible Research course on the Coursera plateform (see presentation [here](https://www.coursera.org/course/repdata). The analysis was performed using R and RStudio.  
+  
+We're going to get a quick overview of a database of storms in the US. The observations where collected by the U.S. National Oceanic and Atmospheric Administration (NOAA).  
+  
+For this purpose, we will be answer two questions :  
+-Across the United States, which types of events (as indicated in the EVTYPE variable) are most harmful with respect to population health?  
+-Across the United States, which types of events have the greatest economic consequences?  
+
+##Loading the data and looking at their caracteristics
+```{r,cache=TRUE}
+storm_data<-read.csv("repdata-data-StormData.csv")
+dim(storm_data)
+names(storm_data)
+```
+The attribute "EVTYPE" describes the type of event. Let's look at the
+
+
+
