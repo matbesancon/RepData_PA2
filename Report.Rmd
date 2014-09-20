@@ -16,10 +16,18 @@ The data were collected by the U.S. National Oceanic and Atmospheric Administrat
 Pareto analyses were performed to detect the key events types for each problem. 11 key event types are highlighted for the issue of human fatalities, while only 5 event types are relevant considering the human fatalities and injuries.  
   
 ## Data processing
+The raw data are loaded into `storm_data`, we can take a look at the size and content of the dataset.
 ```{r,cache=TRUE}
 storm_data<-read.csv("repdata-data-StormData.csv")
 dim(storm_data)
 names(storm_data)
+```
+Since our dataset is huge, we will reduce it to some subsets for each specific need of the analysis. We create two subsets, `harm_data` for the consequences on human health and `eco_data` for the economic impact.
+```{r}
+use_att<-c("EVTYPE","FATALITIES","INJURIES")
+harm_data<-storm_data[use_att]
+eco_att<-c("EVTYPE","PROPDMG","PROPDMGEXP","CROPDMG","CROPDMGEXP")
+eco_data<-storm_data[eco_att]
 ```
 
 ###Loading the libraries
@@ -28,6 +36,33 @@ The attribute "EVTYPE" describes the type of event. Let's look at the
 ```{r,echo=FALSE}
 library(ggplot2)
 ```
+
+For the impact on health, we consider two metrics as relevant, the amount of fatalities and the amount of fatalities and injuries per event (which we compute in a new attribute, `Harm`. We create two aggregations of the dataset,`agg_harm` for fatalities and `agg2` for the overall harms.
+
+```{r}
+attach(harm_data)
+harm_data$Harm<-FATALITIES + INJURIES
+agg_harm<-aggregate(FATALITIES~EVTYPE,FUN=sum)
+agg2<-aggregate(Harm~EVTYPE,FUN=sum)
+detach(harm_data)
+```
+We want to work only on events which affected fatalities and harms respectively, so we sort and clean the aggregated data, keeping only the interesting event types.
+```{r}
+# For fatalities
+agg_harm<-agg_harm[order(-agg_harm$FATALITIES),]
+agg_harm<-agg_harm[which(agg_harm$FATALITIES>0),]
+total_fatal<-sum(agg_harm$FATALITIES)
+
+# For harms
+agg2<-agg2[order(-agg2$Harm),]
+agg2<-agg2[which(agg2$Harm>0),]
+total_harm<-sum(agg2$Harm)
+```
+
+
+
+
+
 
 
 
