@@ -49,3 +49,42 @@ par2<-qplot(weight=FATALITIES,reorder(EVTYPE,-FATALITIES),data=agg_crit,geom="ba
 #Creating a new attributes, sum of fatalities and injuries
 harm_data$Harm<-harm_data$FATALITIES + harm_data$INJURIES
 
+#Computing a Pareto analysis of the data
+# aggregating
+attach(harm_data)
+agg2<-aggregate(Harm~EVTYPE,FUN=sum)
+detach(harm_data)
+#2. sorting
+agg2<-agg2[order(-agg2$Harm),]
+agg2<-agg2[which(agg2$Harm>0),]
+total_harm<-sum(agg2$Harm)
+agg2$Cumulated<-NA
+agg2$Cumulated[1]<-agg2$Harm[1]/total_harm
+agg2$Index<-1
+
+index_h<-NULL
+for (i in 2:(as.numeric((length(agg2$Cumulated))))){
+        agg2[i,3]<-agg2[i-1,3]+(agg2[i,2]/total_harm)
+        agg2[i,4]<-i
+}
+for (i in 2:length(agg2$Cumulated)){
+        if (agg2[i,3]>0.8){
+                index_h<-(i)
+                break
+        }
+}
+par3<-ggplot(data=agg2,aes(Index,Cumulated))
+par3<-par3+geom_line(ylab="Cumulated percentage of harms",col='red',size=1.1)
+par3<-par3+labs(y="Cumulated fraction of harms",title="Pareto analysis for harms")
+par3<-par3+xlim(c(0,NA))+ylim(c(0,1))
+par3<-par3+geom_abline(intercept=0,slope=(1/length(agg2$Cumulated)))
+par3<-par3+geom_abline(intercept=0.8,slope=0,col='orange',size=0.8)
+par3<-par3+geom_vline(xintercept=as.numeric(index_h),col='blue',size=0.8)
+
+agg_crit2<-agg2[1:index_h,]
+par4<-qplot(weight=Harm,reorder(EVTYPE,-Harm),data=agg_crit2,geom="bar",ylab="Harms",fill=Index)
+
+#Question 2 : Across the United States, which types of events have 
+#the greatest economic consequences?
+
+
