@@ -40,8 +40,8 @@ library(ggplot2)
 For the impact on health, we consider two metrics as relevant, the amount of fatalities and the amount of fatalities and injuries per event (which we compute in a new attribute, `Harm`. We create two aggregations of the dataset,`agg_harm` for fatalities and `agg2` for the overall harms.
 
 ```{r}
+harm_data$Harm<-harm_data$FATALITIES + harm_data$INJURIES
 attach(harm_data)
-harm_data$Harm<-FATALITIES + INJURIES
 agg_harm<-aggregate(FATALITIES~EVTYPE,FUN=sum)
 agg2<-aggregate(Harm~EVTYPE,FUN=sum)
 detach(harm_data)
@@ -53,11 +53,82 @@ agg_harm<-agg_harm[order(-agg_harm$FATALITIES),]
 agg_harm<-agg_harm[which(agg_harm$FATALITIES>0),]
 total_fatal<-sum(agg_harm$FATALITIES)
 
-# For harms
+# For all harms
 agg2<-agg2[order(-agg2$Harm),]
 agg2<-agg2[which(agg2$Harm>0),]
 total_harm<-sum(agg2$Harm)
 ```
+The cumulated percentage of the metric of interest can then be computed.
+```{r}
+#For fatalities
+agg_harm$Cumulated<-NA
+agg_harm$Cumulated[1]<-agg_harm$FATALITIES[1]/total_fatal
+agg_harm$Index<-1
+index_80<-NULL
+for (i in 2:(as.numeric((length(agg_harm$Cumulated))))){
+        agg_harm[i,3]<-agg_harm[i-1,3]+(agg_harm[i,2]/total_fatal)
+        agg_harm[i,4]<-i
+}
+for (i in 2:length(agg_harm$Cumulated)){
+        if (agg_harm[i,3]>0.8){
+                index_80<-(i)
+                break
+        }
+}
+#For all harms
+agg2$Cumulated<-NA
+agg2$Cumulated[1]<-agg2$Harm[1]/total_harm
+agg2$Index<-1
+index_h<-NULL
+for (i in 2:(as.numeric((length(agg2$Cumulated))))){
+        agg2[i,3]<-agg2[i-1,3]+(agg2[i,2]/total_harm)
+        agg2[i,4]<-i
+}
+for (i in 2:length(agg2$Cumulated)){
+        if (agg2[i,3]>0.8){
+                index_h<-(i)
+                break
+        }
+}
+```
+We represent four plots, two per metric, one pareto curve and a bar plot of the main sources for each metric. Note : we define here the critical causes as the first causes generating 80% of the overall effect (fatalities or harms).
+
+```{r}
+par1<-ggplot(data=agg_harm,aes(Index,Cumulated))
+par1<-par1+geom_line(ylab="Cumulated percentage of fatalities",col='red',size=1.1)
+par1<-par1+labs(y="Cumulated fraction of fatalities",title="Pareto analysis for fatalities")
+par1<-par1+xlim(c(0,NA))+ylim(c(0,1))
+par1<-par1+geom_abline(intercept=0,slope=(1/length(agg_harm$Cumulated)))
+par1<-par1+geom_abline(intercept=0.8,slope=0,col='orange',size=0.8)
+par1<-par1+geom_vline(xintercept=as.numeric(index_80),col='blue',size=0.8)
+
+#Creating the subset containing just the critical event types
+agg_crit<-agg_harm[1:index_80,]
+par2<-qplot(weight=FATALITIES,reorder(EVTYPE,-FATALITIES),data=agg_crit,geom="bar",ylab="Fatalities",fill=Index)
+
+par3<-ggplot(data=agg2,aes(Index,Cumulated))
+par3<-par3+geom_line(ylab="Cumulated percentage of harms",col='red',size=1.1)
+par3<-par3+labs(y="Cumulated fraction of harms",title="Pareto analysis for harms")
+par3<-par3+xlim(c(0,NA))+ylim(c(0,1))
+par3<-par3+geom_abline(intercept=0,slope=(1/length(agg2$Cumulated)))
+par3<-par3+geom_abline(intercept=0.8,slope=0,col='orange',size=0.8)
+par3<-par3+geom_vline(xintercept=as.numeric(index_h),col='blue',size=0.8)
+
+agg_crit2<-agg2[1:index_h,]
+par4<-qplot(weight=Harm,reorder(EVTYPE,-Harm),data=agg_crit2,geom="bar",ylab="Harms",fill=Index)
+```
+```{r}
+print(par1)
+print(par2)
+print(par3)
+print(par4)
+```
+
+
+
+
+
+
 
 
 
