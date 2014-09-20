@@ -87,4 +87,39 @@ par4<-qplot(weight=Harm,reorder(EVTYPE,-Harm),data=agg_crit2,geom="bar",ylab="Ha
 #Question 2 : Across the United States, which types of events have 
 #the greatest economic consequences?
 
+#Extracting just the data we need
+eco_att<-c("EVTYPE","PROPDMG","PROPDMGEXP","CROPDMG","CROPDMGEXP")
+eco_data<-storm_data[eco_att]
+
+#Computing global costs
+eco_data$overall<-0
+eco_data$multi_dmg<-0
+
+for (i in 1:length(eco_data[,1])){
+        eco_data$multi_dmg[i]<-1
+        if (toupper(eco_data[i,3])=="M"){
+                eco_data$multi_dmg[i]<-10^6
+        }
+        if (toupper(eco_data[i,3]=="K")){
+                eco_data$multi_dmg[i]<-10^3
+        }
+        if (toupper(eco_data[i,3]=="B")){
+                eco_data$multi_dmg[i]<-10^9
+        }
+                
+        if (is.numeric(eco_data[i,2])){
+        if (toupper(eco_data[i,3])=="M"){
+                eco_data[i,6]<-eco_data[i,6]+1000000*eco_data[i,2]
+        }else{
+                if (toupper(eco_data[i,3]=="K")){
+                        eco_data[i,6]<-eco_data[i,6]+1000*eco_data[i,2]
+                }else{
+                        if (toupper(eco_data[i,3]=="B")){
+                                eco_data[i,6]<-eco_data[i,6]+10^9*eco_data[i,2]
+                        }
+                        else{eco_data[i,6]<-eco_data[i,6]+eco_data[i,2] }
+                }
+           } 
+        }
+} 
 
