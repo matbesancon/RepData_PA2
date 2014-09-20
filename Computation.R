@@ -19,13 +19,14 @@ agg_harm$Cumulated<-NA
 agg_harm$Cumulated[1]<-agg_harm$FATALITIES[1]/total_fatal
 agg_harm$Index<-1
 index_80<-NULL
-passed_80<-FALSE
-for (i in 2:length(agg_harm$Cumulated)){
+for (i in 2:(as.numeric((length(agg_harm$Cumulated))))){
         agg_harm[i,3]<-agg_harm[i-1,3]+(agg_harm[i,2]/total_fatal)
         agg_harm[i,4]<-i
-        if ((agg_harm[i,4]>0.8)&(passed_80==FALSE)){
-                passed_80<-TRUE
-                index_80<-as.numeric(i)
+}
+for (i in 2:length(agg_harm$Cumulated)){
+        if (agg_harm[i,3]>0.8){
+                index_80<-(i)
+                break
         }
 }
 
@@ -38,3 +39,13 @@ par1<-par1+geom_abline(intercept=0,slope=(1/length(agg_harm$Cumulated)))
 par1<-par1+geom_abline(intercept=0.8,slope=0,col='orange',size=0.8)
 par1<-par1+geom_vline(xintercept=as.numeric(index_80),col='blue',size=0.8)
 print(par1)
+
+#Creating the subset containing just the critical event types
+agg_crit<-agg_harm[1:index_80,]
+par2<-qplot(weight=FATALITIES,reorder(EVTYPE,-FATALITIES),data=agg_crit,geom="bar",ylab="Fatalities",fill=Index)
+
+# Repeating the same process but including fatalities and injuries
+
+#Creating a new attributes, sum of fatalities and injuries
+harm_data$Harm<-harm_data$FATALITIES + harm_data$INJURIES
+
