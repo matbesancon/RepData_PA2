@@ -92,11 +92,14 @@ eco_att<-c("EVTYPE","PROPDMG","PROPDMGEXP","CROPDMG","CROPDMGEXP")
 eco_data<-storm_data[eco_att]
 
 #Computing global costs
+eco_data$multi_dmg<-1
+eco_data$multi_crops<-1
 eco_data$overall<-0
-eco_data$multi_dmg<-0
+
+eco_data<-eco_data[which(eco_data$PROPDMG+eco_data$CROPDMG > 0),]
 
 for (i in 1:length(eco_data[,1])){
-        eco_data$multi_dmg[i]<-1
+#Multi dmg
         if (toupper(eco_data[i,3])=="M"){
                 eco_data$multi_dmg[i]<-10^6
         }
@@ -106,6 +109,17 @@ for (i in 1:length(eco_data[,1])){
         if (toupper(eco_data[i,3]=="B")){
                 eco_data$multi_dmg[i]<-10^9
         }
+#Crops
+        if (toupper(eco_data[i,5])=="M"){
+                eco_data$multi_crops[i]<-10^6
+        }
+        if (toupper(eco_data[i,5]=="K")){
+                eco_data$multi_crops[i]<-10^3
+        }
+        if (toupper(eco_data[i,5]=="B")){
+                eco_data$multi_crops[i]<-10^9
+        }
+}
                 
         if (is.numeric(eco_data[i,2])){
         if (toupper(eco_data[i,3])=="M"){

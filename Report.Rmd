@@ -1,25 +1,34 @@
 ---
-title: "Reproducible Research : Project 2"
+title: "Reproducible Research, project 2 : a study of storms impacts in the US"
 author: "Mathieu Besancon"
 date: "Sunday, September 14, 2014"
 output: html_document
 ---
-##Introduction
-This report was created for the Reproducible Research course on the Coursera plateform (see presentation [here](https://www.coursera.org/course/repdata). The analysis was performed using R and RStudio.  
-  
-We're going to get a quick overview of a database of storms in the US. The observations where collected by the U.S. National Oceanic and Atmospheric Administration (NOAA).  
-  
-For this purpose, we will be answer two questions :  
--Across the United States, which types of events (as indicated in the EVTYPE variable) are most harmful with respect to population health?  
--Across the United States, which types of events have the greatest economic consequences?  
 
-##Loading the data and looking at their caracteristics
+##Synopsis
+
+The report was created for the Reproducible Research course on the Coursera plateform (see presentation [here](https://www.coursera.org/course/repdata). The analysis was performed using R and RStudio.  
+
+The purpose of the analysis is to use the data available on storms in the USA to draw some conclusions on the storms having the biggest impacts on people's health and on the economy. 
+  
+The data were collected by the U.S. National Oceanic and Atmospheric Administration (NOAA).    
+  
+Pareto analyses were performed to detect the key events types for each problem. 11 key event types are highlighted for the issue of human fatalities, while only 5 event types are relevant considering the human fatalities and injuries.  
+  
+## Data processing
 ```{r,cache=TRUE}
 storm_data<-read.csv("repdata-data-StormData.csv")
 dim(storm_data)
 names(storm_data)
 ```
+
+###Loading the libraries
+The principal library we have to load is ggplot2, which is used to create more complex plots.
 The attribute "EVTYPE" describes the type of event. Let's look at the
+```{r,echo=FALSE}
+library(ggplot2)
+```
+
 
 
 
