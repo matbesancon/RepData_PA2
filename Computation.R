@@ -96,7 +96,7 @@ eco_data$multi_dmg<-1
 eco_data$multi_crops<-1
 eco_data$overall<-0
 
-eco_data<-eco_data[which(eco_data$PROPDMG+eco_data$CROPDMG > 0),]
+eco_data<-eco_data[which(sum(eco_data$PROPDMG,eco_data$CROPDMG,na.rm=TRUE) > 0),]
 
 for (i in 1:length(eco_data[,1])){
 #Multi dmg

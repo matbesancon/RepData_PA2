@@ -7,7 +7,7 @@ output: html_document
 
 ##Synopsis
 
-The report was created for the Reproducible Research course on the Coursera plateform (see presentation [here](https://www.coursera.org/course/repdata). The analysis was performed using R and RStudio.  
+The report was created for the Reproducible Research course on the Coursera plateform (see presentation [here](https://www.coursera.org/course/repdata). The analysis was performed using R and RStudio. More information [on the R project](http://www.R-project.org/). 
 
 The purpose of the analysis is to use the data available on storms in the USA to draw some conclusions on the storms having the biggest impacts on people's health and on the economy. 
   
@@ -36,6 +36,52 @@ The attribute "EVTYPE" describes the type of event. Let's look at the
 ```{r,echo=FALSE}
 library(ggplot2)
 ```
+The multiplot function will also be used for plotting several graphs at a time. The code source is available on [Cookbook for R](http://www.cookbook-r.com/Graphs/Multiple_graphs_on_one_page_(ggplot2)/).
+```{r,echo=FALSE}
+# Multiple plot function
+#
+# ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
+# - cols:   Number of columns in layout
+# - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  require(grid)
+
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+
+  numPlots = length(plots)
+
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                    ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+
+ if (numPlots==1) {
+    print(plots[[1]])
+
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+```
+
+### Studying the impact of storms on people's health  
 
 For the impact on health, we consider two metrics as relevant, the amount of fatalities and the amount of fatalities and injuries per event (which we compute in a new attribute, `Harm`. We create two aggregations of the dataset,`agg_harm` for fatalities and `agg2` for the overall harms.
 
@@ -58,7 +104,7 @@ agg2<-agg2[order(-agg2$Harm),]
 agg2<-agg2[which(agg2$Harm>0),]
 total_harm<-sum(agg2$Harm)
 ```
-The cumulated percentage of the metric of interest can then be computed.
+The cumulated percentage of the metric of interest can then be computed. We also find the observation index for which the cumulated effects reach 80%, `index_80` and `index_h` respectively.
 ```{r}
 #For fatalities
 agg_harm$Cumulated<-NA
@@ -91,7 +137,7 @@ for (i in 2:length(agg2$Cumulated)){
         }
 }
 ```
-We represent four plots, two per metric, one pareto curve and a bar plot of the main sources for each metric. Note : we define here the critical causes as the first causes generating 80% of the overall effect (fatalities or harms).
+We represent four plots, two per metric, one pareto curve (`par1` and `par3`) and a bar plot of the main sources for each metric (`par2` and `par4`). Note : we define here the critical causes as the first causes generating 80% of the overall effect (fatalities or harms). 
 
 ```{r}
 par1<-ggplot(data=agg_harm,aes(Index,Cumulated))
@@ -99,32 +145,87 @@ par1<-par1+geom_line(ylab="Cumulated percentage of fatalities",col='red',size=1.
 par1<-par1+labs(y="Cumulated fraction of fatalities",title="Pareto analysis for fatalities")
 par1<-par1+xlim(c(0,NA))+ylim(c(0,1))
 par1<-par1+geom_abline(intercept=0,slope=(1/length(agg_harm$Cumulated)))
-par1<-par1+geom_abline(intercept=0.8,slope=0,col='orange',size=0.8)
-par1<-par1+geom_vline(xintercept=as.numeric(index_80),col='blue',size=0.8)
+par1<-par1+geom_abline(intercept=0.8,slope=0,col='orange',size=0.5)
+par1<-par1+geom_vline(xintercept=as.numeric(index_80),col='orange',size=0.5)
 
 #Creating the subset containing just the critical event types
 agg_crit<-agg_harm[1:index_80,]
-par2<-qplot(weight=FATALITIES,reorder(EVTYPE,-FATALITIES),data=agg_crit,geom="bar",ylab="Fatalities",fill=Index)
+par2<-qplot(weight=FATALITIES,reorder(EVTYPE,-FATALITIES),data=agg_crit,geom="bar",ylab="Fatalities",fill=Index,title="Main causes of fatalities")
 
 par3<-ggplot(data=agg2,aes(Index,Cumulated))
 par3<-par3+geom_line(ylab="Cumulated percentage of harms",col='red',size=1.1)
 par3<-par3+labs(y="Cumulated fraction of harms",title="Pareto analysis for harms")
 par3<-par3+xlim(c(0,NA))+ylim(c(0,1))
 par3<-par3+geom_abline(intercept=0,slope=(1/length(agg2$Cumulated)))
-par3<-par3+geom_abline(intercept=0.8,slope=0,col='orange',size=0.8)
-par3<-par3+geom_vline(xintercept=as.numeric(index_h),col='blue',size=0.8)
+par3<-par3+geom_abline(intercept=0.8,slope=0,col='orange',size=0.5)
+par3<-par3+geom_vline(xintercept=as.numeric(index_h),col='orange',size=0.5)
 
 agg_crit2<-agg2[1:index_h,]
-par4<-qplot(weight=Harm,reorder(EVTYPE,-Harm),data=agg_crit2,geom="bar",ylab="Harms",fill=Index)
+par4<-qplot(weight=Harm,reorder(EVTYPE,-Harm),data=agg_crit2,geom="bar",ylab="Harms",fill=Index,title="Main causes of harms")
 ```
+We first plot the graphs representing just the fatalities.
 ```{r}
-print(par1)
-print(par2)
-print(par3)
-print(par4)
+multiplot(par1,par2,ncol=2)
+```
+The second pair of plot is taking into account the fatalities and injuries.
+```{r}
+multiplot(par2,par3,ncol=2)
 ```
 
+### Studying the economic impact of storms
 
+Our working data are still quite big, we delete the observations for which the cost was zero.
+```{r}
+eco_data<-eco_data[which(eco_data$PROPDMG>0|eco_data$CROPDMG>0),]
+```
+We first compute the global cost of each storm in a new attribute, `eco_data$overall`.
+```{r}
+eco_data$overall<-0
+for (i in 1:length(eco_data[,1])){
+        if (toupper(eco_data[i,3])=="M"){
+                eco_data$overall[i]<-sum(eco_data$overall[i],(eco_data$PROPDMG[i]*10^6),na.rm=TRUE)
+        }else if(toupper(eco_data[i,3])=="K"){
+                eco_data$overall[i]<-sum(eco_data$overall[i],(eco_data$PROPDMG[i]*10^3),na.rm=TRUE)
+        }else if(toupper(eco_data[i,3])=="B"){
+                eco_data$overall[i]<-sum(eco_data$overall[i],(eco_data$PROPDMG[i]*10^9),na.rm=TRUE)
+        }else{eco_data$overall[i]<-sum(eco_data$overall[i],(eco_data$PROPDMG[i]),na.rm=TRUE)}
+}
+```
+The observations can be sorted down the overall cost (biggest first). We compute a new Pareto analysis for overall costs on an aggregation of the data, `agg_eco`.
+```{r}
+agg_eco<-aggregate(cbind(PROPDMG,CROPDMG)~EVTYPE+PROPDMGEXP+CROPDMGEXP,data=eco_data,FUN=sum)
+agg_eco$overall<-0
+for 
+agg_eco<-agg_eco[order(-agg_eco$overall)]
+
+agg_eco$Cumulated<-0
+agg_eco_Index<-1
+index_cost<-NULL
+total_cost<-sum(agg_eco$overall,na.rm=TRUE)
+agg_eco$Cumulated[1]<- agg_eco$overall[1]/total_cost
+for (i in 2:length(agg_eco[,1])){
+        agg_eco$Cumulated[i]<-(agg_eco$overall[i]/total_cost + agg_eco$Cumulated[i-1])
+        agg_eco$Index[i]<-i
+}
+
+for (i in 2:length(agg_eco$Cumulated)){
+        if (agg_eco$Cumulated[i]>0.8){
+                index_eco<-(i)
+                break
+        }
+}
+```
+The Pareto curve for the overall costs versus `EVTYPE` can be computed.
+```{r}
+par5<-ggplot(data=agg_eco,aes(Index,Cumulated))
+par5<-par5+geom_line(ylab="Cumulated percentage of costs",col='red',size=1.1)
+par5<-par5+labs(y="Fraction of overall costs",title="Pareto analysis for costs")
+par5<-par5+xlim(c(0,NA))+ylim(c(0,1))
+par5<-par5+geom_abline(intercept=0,slope=(1/length(agg_eco$Cumulated)))
+par5<-par5+geom_abline(intercept=0.8,slope=0,col='orange',size=0.5)
+par5<-par5+geom_vline(xintercept=as.numeric(index_eco),col='orange',size=0.5)
+
+```
 
 
 
