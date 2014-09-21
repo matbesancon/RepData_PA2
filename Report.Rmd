@@ -1,5 +1,5 @@
 ---
-title: "Reproducible Research, project 2 : a study of storms impacts in the US"
+title: "Reproducible Research, project 2 : a study of storms impact in the US"
 author: "Mathieu Besancon"
 date: "Sunday, September 14, 2014"
 output: html_document
@@ -205,11 +205,11 @@ agg_eco<-agg_eco[order(-agg_eco$overall),]
 
 
 agg_eco$Cumulated<-0
-agg_eco_Index<-1
+agg_eco$Index<-1
 index_cost<-NULL
 total_cost<-sum(agg_eco$overall,na.rm=TRUE)
 agg_eco$Cumulated[1]<- agg_eco$overall[1]/total_cost
-for (i in 2:length(agg_eco[,1])){
+for (i in 2:length(agg_eco$overall)){
         agg_eco$Cumulated[i]<-(agg_eco$overall[i]/total_cost + agg_eco$Cumulated[i-1])
         agg_eco$Index[i]<-i
 }
