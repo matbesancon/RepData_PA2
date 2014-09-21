@@ -13,7 +13,7 @@ The purpose of the analysis is to use the data available on storms in the USA to
   
 The data were collected by the U.S. National Oceanic and Atmospheric Administration (NOAA).    
   
-Pareto analyses were performed to detect the key events types for each problem. 11 key event types are highlighted for the issue of human fatalities, while only 5 event types are relevant considering the human fatalities and injuries.  
+Pareto analyses were performed to detect the key events types for each problem. 11 key event types are highlighted for the issue of human fatalities, while only 5 event types are relevant considering the human fatalities and injuries. For the overall costs of events, we obtain 25 key event types causing 80% of damages. 
   
 ## Data processing
 The raw data are loaded into `storm_data`, we can take a look at the size and content of the dataset.
@@ -150,7 +150,7 @@ par1<-par1+geom_vline(xintercept=as.numeric(index_80),col='orange',size=0.5)
 
 #Creating the subset containing just the critical event types
 agg_crit<-agg_harm[1:index_80,]
-par2<-qplot(weight=FATALITIES,reorder(EVTYPE,-FATALITIES),data=agg_crit,geom="bar",ylab="Fatalities",fill=Index,title="Main causes of fatalities")
+par2<-qplot(weight=FATALITIES,reorder(EVTYPE,-FATALITIES),data=agg_crit,geom="bar",xlab="Event type",ylab="Fatalities",fill=Index,title="Main causes of fatalities")
 
 par3<-ggplot(data=agg2,aes(Index,Cumulated))
 par3<-par3+geom_line(ylab="Cumulated percentage of harms",col='red',size=1.1)
@@ -161,7 +161,7 @@ par3<-par3+geom_abline(intercept=0.8,slope=0,col='orange',size=0.5)
 par3<-par3+geom_vline(xintercept=as.numeric(index_h),col='orange',size=0.5)
 
 agg_crit2<-agg2[1:index_h,]
-par4<-qplot(weight=Harm,reorder(EVTYPE,-Harm),data=agg_crit2,geom="bar",ylab="Harms",fill=Index,title="Main causes of harms")
+par4<-qplot(weight=Harm,reorder(EVTYPE,-Harm),data=agg_crit2,geom="bar",ylab="Harms",xlab="Event type",fill=Index,title="Main causes of harms")
 ```
 We first plot the graphs representing just the fatalities.
 ```{r}
@@ -179,7 +179,7 @@ Our working data are still quite big, we delete the observations for which the c
 eco_data<-eco_data[which(eco_data$PROPDMG>0|eco_data$CROPDMG>0),]
 ```
 
-We aggregate the data with the cost exponent for crops and property damages, so that overall costs can easily be computed.
+We aggregate the data with the cost exponent for crops and property damages, so that overall costs can easily be computed. Once the overall cost are computed, we aggregate once more the overall costs versus `EVTYPE`.
 
 ```{r}
 agg_eco<-aggregate(cbind(PROPDMG,CROPDMG)~EVTYPE+PROPDMGEXP+CROPDMGEXP,data=eco_data,FUN=sum)
@@ -201,6 +201,8 @@ for (i in 1:length(agg_eco[,1])){
         }
         agg_eco$overall[i]<-agg_eco$CROPDMG[i]+agg_eco$PROPDMG[i]
 }
+
+agg_eco<-aggregate(overall~EVTYPE,data=agg_eco,na.rm=TRUE,FUN=sum)
 agg_eco<-agg_eco[order(-agg_eco$overall),]
 
 
@@ -230,11 +232,33 @@ par5<-par5+xlim(c(0,NA))+ylim(c(0,1))
 par5<-par5+geom_abline(intercept=0,slope=(1/length(agg_eco$Cumulated)))
 par5<-par5+geom_abline(intercept=0.8,slope=0,col='orange',size=0.5)
 par5<-par5+geom_vline(xintercept=as.numeric(index_eco),col='orange',size=0.5)
-
+```
+We can also extract the most critical events in a subset, 
+```{r}
 agg_crit3<-agg_eco[1:index_eco,]
-par6<-qplot(weight=overall,reorder(EVTYPE,-overall),data=agg_eco,geom="bar",ylab="Costs ($)",fill=Index,title="Main sources of cost among storms")
+par6<-qplot(weight=overall,reorder(EVTYPE,-overall),data=agg_crit3,geom="bar",ylab="Costs ($)",xlab="Event type",fill=Index,title="Main sources of cost among storms")
 
 multiplot(par5,par6,ncol=2)
+```
+
+## Results  
+  
+The Pareto analysis which was performed for the three different cases allowed us to answer a basic question : on what events types rely 80% of the effect (fatalities, harms or cost).
+
+- For fatalities, the main events are :
+```{r}
+agg_crit$EVTYPE
+```
+  
+- For fatalities and injuries, the main events are :
+```{r}
+agg_crit2$EVTYPE
+```
+We see that the effects are even more concentrated on fewer causes.  
+
+- For costs, the main events are :
+```{r}
+agg_crit3$EVTYPE
 ```
 
 
