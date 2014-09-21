@@ -178,25 +178,31 @@ Our working data are still quite big, we delete the observations for which the c
 ```{r}
 eco_data<-eco_data[which(eco_data$PROPDMG>0|eco_data$CROPDMG>0),]
 ```
-We first compute the global cost of each storm in a new attribute, `eco_data$overall`.
-```{r}
-eco_data$overall<-0
-for (i in 1:length(eco_data[,1])){
-        if (toupper(eco_data[i,3])=="M"){
-                eco_data$overall[i]<-sum(eco_data$overall[i],(eco_data$PROPDMG[i]*10^6),na.rm=TRUE)
-        }else if(toupper(eco_data[i,3])=="K"){
-                eco_data$overall[i]<-sum(eco_data$overall[i],(eco_data$PROPDMG[i]*10^3),na.rm=TRUE)
-        }else if(toupper(eco_data[i,3])=="B"){
-                eco_data$overall[i]<-sum(eco_data$overall[i],(eco_data$PROPDMG[i]*10^9),na.rm=TRUE)
-        }else{eco_data$overall[i]<-sum(eco_data$overall[i],(eco_data$PROPDMG[i]),na.rm=TRUE)}
-}
-```
-The observations can be sorted down the overall cost (biggest first). We compute a new Pareto analysis for overall costs on an aggregation of the data, `agg_eco`.
+
+We aggregate the data with the cost exponent for crops and property damages, so that overall costs can easily be computed.
+
 ```{r}
 agg_eco<-aggregate(cbind(PROPDMG,CROPDMG)~EVTYPE+PROPDMGEXP+CROPDMGEXP,data=eco_data,FUN=sum)
 agg_eco$overall<-0
-for 
-agg_eco<-agg_eco[order(-agg_eco$overall)]
+for (i in 1:length(agg_eco[,1])){
+        if(toupper(agg_eco$PROPDMGEXP[i])=="M"){
+                agg_eco$PROPDMG[i]<-agg_eco$PROPDMG[i]*10^6
+        }else if (toupper(agg_eco$PROPDMGEXP[i])=="K"){
+                agg_eco$PROPDMG[i]<-agg_eco$PROPDMG[i]*10^3
+        }else if (toupper(agg_eco$PROPDMGEXP[i])=="B"){
+                agg_eco$PROPDMG[i]<-agg_eco$PROPDMG[i]*10^9
+        }
+        if(toupper(agg_eco$CROPDMGEXP[i])=="M"){
+                agg_eco$CROPDMG[i]<-agg_eco$CROPDMG[i]*10^6
+        }else if (toupper(agg_eco$CROPDMGEXP[i])=="K"){
+                agg_eco$CROPDMG[i]<-agg_eco$CROPDMG[i]*10^3
+        }else if (toupper(agg_eco$CROPDMGEXP[i])=="B"){
+                agg_eco$CROPDMG[i]<-agg_eco$CROPDMG[i]*10^9
+        }
+        agg_eco$overall[i]<-agg_eco$CROPDMG[i]+agg_eco$PROPDMG[i]
+}
+agg_eco<-agg_eco[order(-agg_eco$overall),]
+
 
 agg_eco$Cumulated<-0
 agg_eco_Index<-1
@@ -225,6 +231,10 @@ par5<-par5+geom_abline(intercept=0,slope=(1/length(agg_eco$Cumulated)))
 par5<-par5+geom_abline(intercept=0.8,slope=0,col='orange',size=0.5)
 par5<-par5+geom_vline(xintercept=as.numeric(index_eco),col='orange',size=0.5)
 
+agg_crit3<-agg_eco[1:index_eco,]
+par6<-qplot(weight=overall,reorder(EVTYPE,-overall),data=agg_eco,geom="bar",ylab="Costs ($)",fill=Index,title="Main sources of cost among storms")
+
+multiplot(par5,par6,ncol=2)
 ```
 
 
